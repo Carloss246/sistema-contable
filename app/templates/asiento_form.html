@@ -1,0 +1,386 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-12 col-xl-10">
+    <!-- Sección de Asistente de IA -->
+    <div class="card shadow-sm border-0 mb-4">
+      <div class="card-header bg-white border-0 py-3">
+        <h2 class="h4 mb-0">
+          <i class="bi bi-robot"></i> Asistente de IA
+        </h2>
+        <p class="text-muted mb-0">Describe tu transacción en lenguaje natural y dejaré que la IA extraiga los datos.</p>
+      </div>
+      <div class="card-body">
+        <div class="mb-3">
+          <label class="form-label">Describe la transacción</label>
+          <textarea
+            id="textoAsiento"
+            class="form-control"
+            rows="4"
+            placeholder="Ejemplo: El 15 de enero recibimos $5000 en efectivo y depositamos en la cuenta bancaria. También compramos mercaderías por $3000."
+          ></textarea>
+          <small class="text-muted d-block mt-2">
+            Describe fechas, montos, cuentas y qué tipo de movimiento es (compra, venta, pago, depósito, etc.)
+          </small>
+        </div>
+        <button
+          type="button"
+          class="btn btn-info"
+          id="btnProcesarIA"
+          onclick="procesarConIA()"
+        >
+          <i class="bi bi-sparkles"></i> Analizar con IA
+        </button>
+        <small class="text-muted d-block mt-2">
+          Funciona gratis en modo local. Si configuras API key, también puede usar Anthropic.
+        </small>
+        <div id="cargandoIA" class="mt-3" style="display: none;">
+          <div class="spinner-border spinner-border-sm text-info me-2" role="status">
+            <span class="visually-hidden">Cargando...</span>
+          </div>
+          <span>Analizando transacción con IA...</span>
+        </div>
+        <div id="errorIA" class="alert alert-danger mt-3" style="display: none;"></div>
+      </div>
+    </div>
+
+    <!-- Vista previa de sugerencias de IA -->
+    <div id="sugerenciasIA" class="card shadow-sm border-0 mb-4" style="display: none;">
+      <div class="card-header bg-light border-0 py-3">
+        <h3 class="h5 mb-0">Sugerencia de la IA</h3>
+        <small class="text-muted" id="modoIA">Revisa y ajusta según sea necesario</small>
+      </div>
+      <div class="card-body">
+        <div class="row g-3 mb-3">
+          <div class="col-md-3">
+            <label class="form-label">Fecha</label>
+            <input type="date" id="fechaSugerida" class="form-control" />
+          </div>
+          <div class="col-md-9">
+            <label class="form-label">Descripción</label>
+            <input type="text" id="descripcionSugerida" class="form-control" />
+          </div>
+        </div>
+
+        <label class="form-label">Movimientos sugeridos</label>
+        <div class="table-responsive">
+          <table class="table align-middle table-sm">
+            <thead class="table-light">
+              <tr>
+                <th style="width: 20%">Cuenta</th>
+                <th>Descripción</th>
+                <th style="width: 12%">Debe</th>
+                <th style="width: 12%">Haber</th>
+                <th style="width: 5%"></th>
+              </tr>
+            </thead>
+            <tbody id="movimientosSugeridos"></tbody>
+          </table>
+        </div>
+
+        <div class="d-flex gap-2 justify-content-end">
+          <button type="button" class="btn btn-secondary" onclick="descartarSugerencia()">
+            Descartar
+          </button>
+          <button type="button" class="btn btn-success" onclick="aceptarSugerencia()">
+            <i class="bi bi-check-circle"></i> Usar esta sugerencia
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Formulario manual de asientos -->
+    <div class="card shadow-sm border-0">
+      <div class="card-header bg-white border-0 py-3">
+        <h2 class="h4 mb-0">Nuevo asiento contable</h2>
+        <p class="text-muted mb-0">O ingresa los movimientos manualmente con partida doble.</p>
+      </div>
+      <div class="card-body">
+        {% if error %}
+        <div class="alert alert-danger">{{ error }}</div>
+        {% endif %}
+
+        <form method="post" action="/asientos" id="asientoForm">
+          <div class="row g-3 mb-3">
+            <div class="col-md-3">
+              <label class="form-label">Fecha</label>
+              <input type="date" name="fecha" class="form-control" value="{{ hoy }}" required>
+            </div>
+            <div class="col-md-5">
+              <label class="form-label">Descripción</label>
+              <input type="text" name="descripcion" class="form-control" placeholder="Describe el asiento" required>
+            </div>
+            <div class="col-md-2">
+              <label class="form-label">Fuente</label>
+              <input type="text" name="fuente" class="form-control" value="MANUAL">
+            </div>
+            <div class="col-md-2">
+              <label class="form-label">Creado por</label>
+              <input type="text" name="creado_por" class="form-control" value="USUARIO">
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h3 class="h5 mb-0">Movimientos</h3>
+            <button class="btn btn-outline-primary btn-sm" type="button" onclick="addMovimientoRow()">
+              <i class="bi bi-plus-circle"></i> Agregar línea
+            </button>
+          </div>
+
+          <div class="table-responsive">
+            <table class="table align-middle">
+              <thead>
+                <tr>
+                  <th style="width: 24%">Cuenta</th>
+                  <th>Descripción</th>
+                  <th style="width: 15%">Debe</th>
+                  <th style="width: 15%">Haber</th>
+                  <th style="width: 5%"></th>
+                </tr>
+              </thead>
+              <tbody id="movimientosBody">
+                <tr class="movimiento-row">
+                  <td>
+                    <select name="codigo_cuenta" class="form-select" required>
+                      <option value="">Seleccionar</option>
+                      {% for cuenta in catalogo %}
+                      <option value="{{ cuenta.codigo }}">{{ cuenta.codigo }} - {{ cuenta.nombre }}</option>
+                      {% endfor %}
+                    </select>
+                  </td>
+                  <td><input type="text" name="descripcion_linea" class="form-control" placeholder="Descripción"></td>
+                  <td><input type="number" step="0.01" min="0" name="debe" class="form-control text-end" placeholder="0.00"></td>
+                  <td><input type="number" step="0.01" min="0" name="haber" class="form-control text-end" placeholder="0.00"></td>
+                  <td><button class="btn btn-sm btn-outline-danger" type="button" onclick="removeMovimientoRow(this)">×</button></td>
+                </tr>
+                <tr class="movimiento-row">
+                  <td>
+                    <select name="codigo_cuenta" class="form-select" required>
+                      <option value="">Seleccionar</option>
+                      {% for cuenta in catalogo %}
+                      <option value="{{ cuenta.codigo }}">{{ cuenta.codigo }} - {{ cuenta.nombre }}</option>
+                      {% endfor %}
+                    </select>
+                  </td>
+                  <td><input type="text" name="descripcion_linea" class="form-control" placeholder="Descripción"></td>
+                  <td><input type="number" step="0.01" min="0" name="debe" class="form-control text-end" placeholder="0.00"></td>
+                  <td><input type="number" step="0.01" min="0" name="haber" class="form-control text-end" placeholder="0.00"></td>
+                  <td><button class="btn btn-sm btn-outline-danger" type="button" onclick="removeMovimientoRow(this)">×</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="d-flex gap-2 justify-content-end">
+            <button type="submit" class="btn btn-primary">Guardar asiento</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Reference al token CSRF (si lo hay) e información del catálogo
+  const catalogo = {{ catalogo | tojson }};
+  const cuentasPorCodigo = {};
+  catalogo.forEach(c => {
+    cuentasPorCodigo[c.codigo] = c.nombre;
+  });
+
+  async function procesarConIA() {
+    const texto = document.getElementById('textoAsiento').value.trim();
+    
+    if (!texto) {
+      alert('Por favor, escribe una descripción de la transacción.');
+      return;
+    }
+
+    const btnProcesar = document.getElementById('btnProcesarIA');
+    const cargandoDiv = document.getElementById('cargandoIA');
+    const errorDiv = document.getElementById('errorIA');
+    
+    // Mostrar estado de cargando
+    btnProcesar.disabled = true;
+    cargandoDiv.style.display = 'block';
+    errorDiv.style.display = 'none';
+    errorDiv.innerHTML = '';
+
+    try {
+      const response = await fetch('/api/parse-asiento', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ texto: texto })
+      });
+
+      if (response.status === 401) {
+        throw new Error('No autenticado');
+      }
+
+      const data = await response.json();
+
+      if (!response.ok || data.error) {
+        throw new Error(data.error || 'Error al procesar');
+      }
+
+      if (data.warning) {
+        errorDiv.className = 'alert alert-warning mt-3';
+        errorDiv.innerHTML = data.warning;
+        errorDiv.style.display = 'block';
+      }
+
+      // Mostrar sugerencias
+      mostrarSugerencias(data);
+
+    } catch (error) {
+      errorDiv.innerHTML = '❌ ' + error.message;
+      errorDiv.style.display = 'block';
+    } finally {
+      btnProcesar.disabled = false;
+      cargandoDiv.style.display = 'none';
+    }
+  }
+
+  function mostrarSugerencias(data) {
+    let modo = 'Motor: Local gratuito';
+    if (data.motor === 'ollama') {
+      modo = 'Motor: Ollama local';
+    } else if (data.motor === 'anthropic') {
+      modo = 'Motor: Anthropic';
+    }
+    document.getElementById('modoIA').textContent = modo + ' · Revisa y ajusta según sea necesario';
+
+    // Poblar campos de sugerencias
+    document.getElementById('fechaSugerida').value = data.fecha || '{{ hoy }}';
+    document.getElementById('descripcionSugerida').value = data.descripcion || '';
+
+    // Mostrar movimientos sugeridos
+    const tbody = document.getElementById('movimientosSugeridos');
+    tbody.innerHTML = '';
+
+    (data.movimientos || []).forEach((mov, idx) => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>
+          <input type="text" class="form-control form-control-sm" 
+                 value="${mov.codigo_cuenta}" 
+                 data-mov-codigo="${idx}"
+                 placeholder="Código">
+          <small class="text-muted">${cuentasPorCodigo[mov.codigo_cuenta] || 'Cuenta no encontrada'}</small>
+        </td>
+        <td>
+          <input type="text" class="form-control form-control-sm"
+                 value="${mov.descripcion || ''}"
+                 data-mov-desc="${idx}"
+                 placeholder="Descripción">
+        </td>
+        <td>
+          <input type="number" step="0.01" min="0" class="form-control form-control-sm text-end"
+                 value="${mov.debe || 0}"
+                 data-mov-debe="${idx}">
+        </td>
+        <td>
+          <input type="number" step="0.01" min="0" class="form-control form-control-sm text-end"
+                 value="${mov.haber || 0}"
+                 data-mov-haber="${idx}">
+        </td>
+        <td>
+          <button type="button" class="btn btn-sm btn-outline-danger" 
+                  onclick="removerMovimientoSugerido(${idx})">
+            ×
+          </button>
+        </td>
+      `;
+      tbody.appendChild(row);
+    });
+
+    // Mostrar panel de sugerencias
+    document.getElementById('sugerenciasIA').style.display = 'block';
+    
+    // Scroll al panel
+    document.getElementById('sugerenciasIA').scrollIntoView({ behavior: 'smooth' });
+  }
+
+  function removerMovimientoSugerido(idx) {
+    document.querySelector(`[data-mov-codigo="${idx}"]`).closest('tr').remove();
+  }
+
+  function aceptarSugerencia() {
+    const fecha = document.getElementById('fechaSugerida').value;
+    const descripcion = document.getElementById('descripcionSugerida').value;
+
+    // Llenar formulario con sugerencias
+    document.querySelector('input[name="fecha"]').value = fecha;
+    document.querySelector('input[name="descripcion"]').value = descripcion;
+
+    // Limpiar movimientos existentes y llenar con sugeridos
+    const tbody = document.getElementById('movimientosBody');
+    tbody.innerHTML = '';
+
+    document.getElementById('movimientosSugeridos').querySelectorAll('tr').forEach((row, idx) => {
+      const codigo = row.querySelector('[data-mov-codigo]')?.value || '';
+      const desc = row.querySelector('[data-mov-desc]')?.value || '';
+      const debe = parseFloat(row.querySelector('[data-mov-debe]')?.value || 0);
+      const haber = parseFloat(row.querySelector('[data-mov-haber]')?.value || 0);
+
+      if (codigo) {
+        const tr = document.createElement('tr');
+        tr.className = 'movimiento-row';
+        tr.innerHTML = `
+          <td>
+            <select name="codigo_cuenta" class="form-select" required>
+              <option value="">Seleccionar</option>
+              ${catalogo.map(c => 
+                `<option value="${c.codigo}" ${c.codigo === codigo ? 'selected' : ''}>
+                  ${c.codigo} - ${c.nombre}
+                </option>`
+              ).join('')}
+            </select>
+          </td>
+          <td><input type="text" name="descripcion_linea" class="form-control" value="${desc}" placeholder="Descripción"></td>
+          <td><input type="number" step="0.01" min="0" name="debe" class="form-control text-end" value="${debe}" placeholder="0.00"></td>
+          <td><input type="number" step="0.01" min="0" name="haber" class="form-control text-end" value="${haber}" placeholder="0.00"></td>
+          <td><button class="btn btn-sm btn-outline-danger" type="button" onclick="removeMovimientoRow(this)">×</button></td>
+        `;
+        tbody.appendChild(tr);
+      }
+    });
+
+    // Descartar sugerencias
+    descartarSugerencia();
+
+    // Scroll al formulario
+    document.getElementById('asientoForm').scrollIntoView({ behavior: 'smooth' });
+  }
+
+  function descartarSugerencia() {
+    document.getElementById('sugerenciasIA').style.display = 'none';
+    document.getElementById('textoAsiento').value = '';
+  }
+
+  function addMovimientoRow() {
+    const tbody = document.getElementById('movimientosBody');
+    const row = document.createElement('tr');
+    row.className = 'movimiento-row';
+    row.innerHTML = `
+      <td>
+        <select name="codigo_cuenta" class="form-select" required>
+          <option value="">Seleccionar</option>
+          ${catalogo.map(c => `<option value="${c.codigo}">${c.codigo} - ${c.nombre}</option>`).join('')}
+        </select>
+      </td>
+      <td><input type="text" name="descripcion_linea" class="form-control" placeholder="Descripción"></td>
+      <td><input type="number" step="0.01" min="0" name="debe" class="form-control text-end" placeholder="0.00"></td>
+      <td><input type="number" step="0.01" min="0" name="haber" class="form-control text-end" placeholder="0.00"></td>
+      <td><button class="btn btn-sm btn-outline-danger" type="button" onclick="removeMovimientoRow(this)">×</button></td>
+    `;
+    tbody.appendChild(row);
+  }
+
+  function removeMovimientoRow(btn) {
+    btn.closest('tr').remove();
+  }
+</script>
+{% endblock %}

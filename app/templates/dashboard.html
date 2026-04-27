@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="hero-card p-4 p-md-5 mb-4">
+  <div class="row align-items-center g-4">
+    <div class="col-lg-8">
+      <span class="badge rounded-pill text-bg-light mb-3">Python + Supabase</span>
+      <h1 class="display-6 fw-bold text-white mb-3">Sistema contable web</h1>
+      <p class="text-white-50 mb-4">Captura asientos y consulta diario, mayor, balanza y estados financieros desde una interfaz web.</p>
+      <div class="d-flex gap-2 flex-wrap">
+        <a href="/asientos/nuevo" class="btn btn-light btn-lg"><i class="bi bi-journal-plus"></i> Nuevo asiento</a>
+        <a href="/estado-resultados" class="btn btn-outline-light btn-lg">Ver estados</a>
+      </div>
+    </div>
+    <div class="col-lg-4">
+      <div class="stats-grid">
+        <div class="stat-box">
+          <div class="stat-label">Cuentas</div>
+          <div class="stat-value">{{ stats.cuentas }}</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Asientos</div>
+          <div class="stat-value">{{ stats.asientos }}</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Movimientos</div>
+          <div class="stat-value">{{ stats.movimientos }}</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Saldo total</div>
+          <div class="stat-value">{{ stats.saldo_total }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-md-6 col-xl-3">
+    <a class="card shortcut-card h-100" href="/catalogo">
+      <div class="card-body">
+        <h5 class="card-title">Catálogo</h5>
+        <p class="card-text text-muted">Consulta cuentas base y su naturaleza.</p>
+      </div>
+    </a>
+  </div>
+  <div class="col-md-6 col-xl-3">
+    <a class="card shortcut-card h-100" href="/diario">
+      <div class="card-body">
+        <h5 class="card-title">Libro diario</h5>
+        <p class="card-text text-muted">Revisa el registro cronológico de asientos.</p>
+      </div>
+    </a>
+  </div>
+  <div class="col-md-6 col-xl-3">
+    <a class="card shortcut-card h-100" href="/mayor">
+      <div class="card-body">
+        <h5 class="card-title">Libro mayor</h5>
+        <p class="card-text text-muted">Analiza movimientos por cuenta contable.</p>
+      </div>
+    </a>
+  </div>
+  <div class="col-md-6 col-xl-3">
+    <a class="card shortcut-card h-100" href="/balanza">
+      <div class="card-body">
+        <h5 class="card-title">Balanza</h5>
+        <p class="card-text text-muted">Verifica saldos y totaliza débitos y créditos.</p>
+      </div>
+    </a>
+  </div>
+</div>
+{% endblock %}

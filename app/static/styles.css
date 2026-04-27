@@ -1,0 +1,82 @@
+:root {
+  --navy: #0f172a;
+  --accent: #2563eb;
+  --soft: #f5f7fb;
+}
+
+.bg-soft {
+  background: var(--soft);
+}
+
+.bg-navy {
+  background: var(--navy);
+}
+
+.hero-card {
+  border-radius: 1.25rem;
+  background: linear-gradient(135deg, #0f172a 0%, #1d4ed8 100%);
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.18);
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.stat-box {
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  border-radius: 1rem;
+  padding: 1rem;
+  backdrop-filter: blur(8px);
+}
+
+.stat-label {
+  font-size: 0.85rem;
+  opacity: 0.8;
+}
+
+.stat-value {
+  font-size: 1.8rem;
+  font-weight: 700;
+}
+
+.shortcut-card {
+  text-decoration: none;
+  color: inherit;
+  border: 0;
+  border-radius: 1rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.shortcut-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 30px rgba(15, 23, 42, 0.08);
+}
+
+.login-hero {
+  min-height: 72vh;
+  display: flex;
+  align-items: center;
+}
+
+.login-card {
+  border-radius: 1rem;
+}
+
+.login-card .form-control {
+  border-radius: 0.75rem;
+  border-color: #d6def5;
+}
+
+.login-card .form-control:focus {
+  border-color: #1d4ed8;
+  box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.2);
+}
+
+@media (max-width: 991px) {
+  .login-hero {
+    min-height: auto;
+  }
+}

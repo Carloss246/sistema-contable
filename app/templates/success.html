@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="card shadow-sm border-0 text-center p-4">
+      <div class="card-body py-5">
+        <div class="display-1 text-success mb-3"><i class="bi bi-check-circle-fill"></i></div>
+        <h1 class="h3 mb-3">Operación completada</h1>
+        <p class="text-muted mb-4">{{ message }}</p>
+        <a href="{{ back_url }}" class="btn btn-primary">Registrar otro asiento</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
