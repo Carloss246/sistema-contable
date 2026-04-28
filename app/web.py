@@ -11,7 +11,6 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from app.accounting_service import AccountingService, MovimientoInput
-from app.ai_service import AIAsientoService
 from app.config import load_settings
 from app.db import build_client
 
@@ -76,12 +75,12 @@ def _build_movimientos_from_form(form: Any) -> list[MovimientoInput]:
 def _dashboard_data(service: AccountingService) -> dict[str, Any]:
     catalogo = service.obtener_catalogo()
     diario = service.obtener_libro_diario()
-    balanza = service.obtener_balanza()
+    estado_resultados = service.obtener_estado_resultados()
     return {
         "cuentas": len(catalogo),
         "movimientos": len(diario),
         "asientos": len({row["numero_asiento"] for row in diario}),
-        "saldo_total": round(sum(float(row["saldo_deudor"]) for row in balanza), 2),
+        "saldo_total": round(float(estado_resultados["utilidad_neta"]), 2),
     }
 
 
@@ -379,45 +378,6 @@ async def crear_asiento(request: Request):
         )
 
 
-@app.post("/api/parse-asiento")
-async def parse_asiento_ia(request: Request):
-    """Usa IA para procesar un texto y extraer información del asiento."""
-    auth_redirect = _protected_redirect(request)
-    if auth_redirect:
-        return JSONResponse({"error": "No autenticado"}, status_code=401)
-
-    try:
-        data = await request.json()
-        texto = str(data.get("texto", "")).strip()
-
-        if not texto:
-            return JSONResponse(
-                {"error": "El texto no puede estar vacío"},
-                status_code=400,
-            )
-
-        # Obtener catálogo de cuentas
-        service = _service_for_request(request)
-        catalogo = service.obtener_catalogo()
-
-        # Procesar con IA
-        ai_service = AIAsientoService(
-            api_key=settings.anthropic_api_key,
-            catalogo_cuentas=catalogo,
-            ollama_base_url=settings.ollama_base_url,
-            ollama_model=settings.ollama_model,
-        )
-        result = ai_service.parse_asiento(texto)
-
-        return JSONResponse(result)
-
-    except Exception as exc:
-        return JSONResponse(
-            {"error": f"Error al procesar: {str(exc)}"},
-            status_code=500,
-        )
-
-
 @app.get("/asientos/{asiento_id}", response_class=HTMLResponse)
 def asiento_exitoso(request: Request, asiento_id: str):
     auth_redirect = _protected_redirect(request)
@@ -476,18 +436,60 @@ def mayor(request: Request, cuenta: str | None = None, desde: str | None = None,
     try:
         service = _service_for_request(request)
         rows = service.obtener_mayor(cuenta, _parse_date(desde), _parse_date(hasta))
+        
+        # Agrupar movimientos por cuenta manualmente
+        cuentas_dict = {}
+        for row in rows:
+            cod = row.get("codigo_cuenta")
+            if not cod:
+                continue
+            if cod not in cuentas_dict:
+                cuentas_dict[cod] = {
+                    "codigo": cod,
+                    "nombre": row.get("nombre_cuenta", ""),
+                    "debe_rows": [],
+                    "haber_rows": [],
+                    "total_debe": 0.0,
+                    "total_haber": 0.0,
+                }
+            
+            # Separar por debe/haber
+            debe = float(row.get("debe") or 0)
+            haber = float(row.get("haber") or 0)
+            
+            if debe > 0:
+                cuentas_dict[cod]["debe_rows"].append({
+                    "fecha": row.get("fecha"),
+                    "desc": row.get("descripcion_asiento"),
+                    "asiento": row.get("numero_asiento"),
+                    "monto": debe
+                })
+                cuentas_dict[cod]["total_debe"] += debe
+            
+            if haber > 0:
+                cuentas_dict[cod]["haber_rows"].append({
+                    "fecha": row.get("fecha"),
+                    "desc": row.get("descripcion_asiento"),
+                    "asiento": row.get("numero_asiento"),
+                    "monto": haber
+                })
+                cuentas_dict[cod]["total_haber"] += haber
+        
+        cuentas_list = sorted(cuentas_dict.values(), key=lambda x: x["codigo"])
+        
+        context = _template_context(
+            request,
+            "Libro mayor",
+            {
+                "heading": "Libro mayor",
+                "cuentas": cuentas_list,
+            },
+        )
+        
         return templates.TemplateResponse(
             request,
-            "report_page.html",
-            _template_context(
-                request,
-                "Libro mayor",
-                {
-                    "heading": "Libro mayor",
-                    "rows": rows,
-                    "columns": ["codigo_cuenta", "nombre_cuenta", "numero_asiento", "fecha", "descripcion_asiento", "debe", "haber"],
-                },
-            ),
+            "mayor.html",
+            context,
         )
     except Exception as exc:
         return _render_error(request, "No se pudo cargar el libro mayor.", str(exc))
@@ -502,9 +504,20 @@ def balanza(request: Request):
     try:
         service = _service_for_request(request)
         rows = service.obtener_balanza()
+        
+        # Filtrar solo cuentas con movimientos (donde hay saldo)
+        rows = [row for row in rows if (
+            float(row.get("total_debe") or 0) > 0 or 
+            float(row.get("total_haber") or 0) > 0
+        )]
+        
+        # Calcular totales
+        total_debe = sum(float(row.get("total_debe") or 0) for row in rows)
+        total_haber = sum(float(row.get("total_haber") or 0) for row in rows)
+        
         return templates.TemplateResponse(
             request,
-            "table_page.html",
+            "balanza_page.html",
             _template_context(
                 request,
                 "Balanza de comprobacion",
@@ -512,6 +525,8 @@ def balanza(request: Request):
                     "heading": "Balanza de comprobacion",
                     "rows": rows,
                     "columns": ["codigo", "nombre", "grupo", "total_debe", "total_haber", "saldo_deudor", "saldo_acreedor"],
+                    "total_debe": total_debe,
+                    "total_haber": total_haber,
                 },
             ),
         )

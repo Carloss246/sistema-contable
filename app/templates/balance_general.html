@@ -1,50 +1,194 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="row g-4">
-  <div class="col-lg-4">
-    <div class="card shadow-sm border-0 h-100">
-      <div class="card-body">
-        <h2 class="h4">Activos</h2>
-        <ul class="list-group list-group-flush mb-3">
-          {% for item in data.activos %}
-          <li class="list-group-item d-flex justify-content-between"><span>{{ item.codigo }} - {{ item.nombre }}</span><strong>{{ item.monto }}</strong></li>
-          {% endfor %}
-        </ul>
-        <div class="d-flex justify-content-between"><span>Total activos</span><strong>{{ data.total_activos }}</strong></div>
+<style>
+  .balance-title {
+    font-weight: 800;
+    text-align: center;
+    letter-spacing: 0.04em;
+  }
+
+  .balance-table {
+    margin-bottom: 0;
+  }
+
+  .balance-table td {
+    padding: 0.45rem 0.6rem;
+    vertical-align: middle;
+    border-color: #1f1f1f;
+  }
+
+  .balance-section {
+    background: #fff;
+  }
+
+  .row-soft {
+    background: #fff7d6;
+    font-weight: 700;
+  }
+
+  .row-strong {
+    background: #0d6efd;
+    font-weight: 800;
+  }
+
+  .row-final {
+    background: #f4b183;
+    font-weight: 800;
+  }
+
+  .row-blue {
+    background: #dbeafe;
+    font-weight: 800;
+  }
+
+  .row-blue-final {
+    background: #0d6efd;
+    color: #fff;
+    font-weight: 900;
+  }
+
+  .value-cell {
+    width: 34%;
+    text-align: right;
+    white-space: nowrap;
+  }
+</style>
+
+<div class="row g-4 align-items-start">
+  <div class="col-lg-6">
+    <div class="balance-section">
+      <div class="balance-title h3 mb-2">ACTIVO</div>
+      <table class="table table-bordered balance-table">
+        <tbody>
+          <tr>
+            <td>ACTIVO CORRIENTE</td>
+            <td class="value-cell"></td>
+          </tr>
+          <tr>
+            <td class="ps-4">Caja y Bancos</td>
+            <td class="value-cell">{{ "%.2f"|format(data.caja_bancos) }}</td>
+          </tr>
+          <tr>
+            <td class="ps-4">Cuentas por Cobrar</td>
+            <td class="value-cell">{{ "%.2f"|format(data.cuentas_cobrar) }}</td>
+          </tr>
+          <tr>
+            <td class="ps-4">Inventarios</td>
+            <td class="value-cell">{{ "%.2f"|format(data.inventarios) }}</td>
+          </tr>
+          <tr class="row-blue">
+            <td>TOTAL ACTIVO CORRIENTE</td>
+            <td class="value-cell">{{ "%.2f"|format(data.activo_corriente) }}</td>
+          </tr>
+          <tr>
+            <td>ACTIVO NO CORRIENTE</td>
+            <td class="value-cell"></td>
+          </tr>
+          <tr>
+            <td class="ps-4">Inmuebles y Equipos</td>
+            <td class="value-cell">{{ "%.2f"|format(data.inmuebles_equipos) }}</td>
+          </tr>
+          <tr>
+            <td class="ps-4">Intangibles e Inversiones largas</td>
+            <td class="value-cell">{{ "%.2f"|format(data.intangibles_e_inversiones) }}</td>
+          </tr>
+          <tr class="row-blue">
+            <td>TOTAL ACTIVO NO CORRIENTE</td>
+            <td class="value-cell">{{ "%.2f"|format(data.activo_no_corriente) }}</td>
+          </tr>
+          <tr class="row-blue-final">
+            <td>ACTIVO TOTAL</td>
+            <td class="value-cell">{{ "%.2f"|format(data.total_activo) }}</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="row-strong p-2 border border-dark mt-4">
+        <div class="d-flex justify-content-between align-items-center">
+          <span class="h5 mb-0 fw-bold">TOTAL ACTIVO</span>
+          <strong class="fs-4">{{ "%.2f"|format(data.total_activo) }}</strong>
+        </div>
       </div>
     </div>
   </div>
-  <div class="col-lg-4">
-    <div class="card shadow-sm border-0 h-100">
-      <div class="card-body">
-        <h2 class="h4">Pasivos</h2>
-        <ul class="list-group list-group-flush mb-3">
-          {% for item in data.pasivos %}
-          <li class="list-group-item d-flex justify-content-between"><span>{{ item.codigo }} - {{ item.nombre }}</span><strong>{{ item.monto }}</strong></li>
-          {% endfor %}
-        </ul>
-        <div class="d-flex justify-content-between"><span>Total pasivos</span><strong>{{ data.total_pasivos }}</strong></div>
-      </div>
+
+  <div class="col-lg-6">
+    <div class="balance-section mb-4">
+      <div class="balance-title h3 mb-2">PASIVO</div>
+      <table class="table table-bordered balance-table">
+        <tbody>
+          <tr>
+            <td>PASIVO CORRIENTE</td>
+            <td class="value-cell"></td>
+          </tr>
+          <tr>
+            <td class="ps-4">Con el Estado y Trabajadores</td>
+            <td class="value-cell">{{ "%.2f"|format(data.pasivo_corriente) }}</td>
+          </tr>
+          <tr class="row-blue">
+            <td>TOT PASIVO CORR</td>
+            <td class="value-cell">{{ "%.2f"|format(data.pasivo_corriente) }}</td>
+          </tr>
+          <tr>
+            <td>PASIVO NO CORRIENTE</td>
+            <td class="value-cell"></td>
+          </tr>
+          <tr>
+            <td class="ps-4">Con Bancos y Otras obligaciones</td>
+            <td class="value-cell">{{ "%.2f"|format(data.pasivo_no_corriente) }}</td>
+          </tr>
+          <tr class="row-blue">
+            <td>TOTAL PAS NO CORR</td>
+            <td class="value-cell">{{ "%.2f"|format(data.pasivo_no_corriente) }}</td>
+          </tr>
+          <tr class="row-blue-final">
+            <td>TOTAL PASIVO</td>
+            <td class="value-cell">{{ "%.2f"|format(data.total_pasivo) }}</td>
+          </tr>
+        </tbody>
+      </table>
     </div>
-  </div>
-  <div class="col-lg-4">
-    <div class="card shadow-sm border-0 h-100">
-      <div class="card-body">
-        <h2 class="h4">Capital</h2>
-        <ul class="list-group list-group-flush mb-3">
-          {% for item in data.capital %}
-          <li class="list-group-item d-flex justify-content-between"><span>{{ item.codigo }} - {{ item.nombre }}</span><strong>{{ item.monto }}</strong></li>
-          {% endfor %}
-        </ul>
-        <div class="d-flex justify-content-between"><span>Total capital</span><strong>{{ data.total_capital }}</strong></div>
+
+    <div class="balance-section">
+      <div class="balance-title h3 mb-2">PATRIMONIO</div>
+      <table class="table table-bordered balance-table">
+        <tbody>
+          <tr>
+            <td>Capital y aportes</td>
+            <td class="value-cell">{{ "%.2f"|format(data.capital_y_aportes) }}</td>
+          </tr>
+          <tr>
+            <td>Reservas</td>
+            <td class="value-cell">{{ "%.2f"|format(data.reservas) }}</td>
+          </tr>
+          <tr class="row-final">
+            <td>Utilidades Acumuladas</td>
+            <td class="value-cell">{{ "%.2f"|format(data.utilidad_neta) }}</td>
+          </tr>
+          <tr class="row-blue-final">
+            <td>TOTAL PATRIMONIO</td>
+            <td class="value-cell">{{ "%.2f"|format(data.total_patrimonio) }}</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="row-strong p-2 border border-dark mt-4">
+        <div class="d-flex justify-content-between align-items-center">
+          <span class="h5 mb-0 fw-bold">TOTAL PASIVO + PATRIM</span>
+          <strong class="fs-4">{{ "%.2f"|format(data.total_pasivo_mas_patrimonio) }}</strong>
+        </div>
       </div>
     </div>
   </div>
 </div>
-<div class="card shadow-sm border-0 mt-4">
-  <div class="card-body d-flex justify-content-between align-items-center">
-    <span class="h5 mb-0">Pasivo + Capital</span>
-    <strong class="fs-4">{{ data.pasivo_mas_capital }}</strong>
+
+<div class="mt-4">
+  {% if data.total_activo == data.total_pasivo_mas_patrimonio %}
+  <div class="alert alert-success mb-0">
+    El balance está equilibrado: ACTIVO = PASIVO + PATRIMONIO = {{ "%.2f"|format(data.total_activo) }}
   </div>
+  {% else %}
+  <div class="alert alert-danger mb-0">
+    Desbalance: ACTIVO = {{ "%.2f"|format(data.total_activo) }} vs PASIVO + PATRIMONIO = {{ "%.2f"|format(data.total_pasivo_mas_patrimonio) }}
+  </div>
+  {% endif %}
 </div>
 {% endblock %}

@@ -1,37 +1,90 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="row g-4">
-  <div class="col-lg-6">
-    <div class="card shadow-sm border-0 h-100">
-      <div class="card-body">
-        <h2 class="h4">Ingresos</h2>
-        <ul class="list-group list-group-flush mb-3">
-          {% for item in data.ingresos %}
-          <li class="list-group-item d-flex justify-content-between"><span>{{ item.codigo }} - {{ item.nombre }}</span><strong>{{ item.monto }}</strong></li>
-          {% endfor %}
-        </ul>
-        <div class="d-flex justify-content-between"><span>Total ingresos</span><strong>{{ data.total_ingresos }}</strong></div>
-      </div>
-    </div>
-  </div>
-  <div class="col-lg-6">
-    <div class="card shadow-sm border-0 h-100">
-      <div class="card-body">
-        <h2 class="h4">Gastos</h2>
-        <ul class="list-group list-group-flush mb-3">
-          {% for item in data.gastos %}
-          <li class="list-group-item d-flex justify-content-between"><span>{{ item.codigo }} - {{ item.nombre }}</span><strong>{{ item.monto }}</strong></li>
-          {% endfor %}
-        </ul>
-        <div class="d-flex justify-content-between"><span>Total gastos</span><strong>{{ data.total_gastos }}</strong></div>
-      </div>
-    </div>
-  </div>
-</div>
-<div class="card shadow-sm border-0 mt-4">
-  <div class="card-body d-flex justify-content-between align-items-center">
-    <span class="h5 mb-0">Utilidad neta</span>
-    <strong class="fs-4">{{ data.utilidad_neta }}</strong>
+<div class="card shadow-sm border-0">
+  <div class="card-body p-0">
+    <table class="table table-borderless mb-0">
+      <!-- VENTAS NETAS -->
+      <tr>
+        <td class="fw-bold">Ventas</td>
+        <td class="text-end">{{ "%.2f"|format(data.ventas) }}</td>
+      </tr>
+      <tr>
+        <td class="fw-bold">Descuentos</td>
+        <td class="text-end">-{{ "%.2f"|format(data.descuentos) }}</td>
+      </tr>
+      <tr class="border-bottom">
+        <td class="fw-bold ps-4"><em>Ventas Netas</em></td>
+        <td class="text-end"><em>{{ "%.2f"|format(data.ventas_netas) }}</em></td>
+      </tr>
+
+      <!-- COSTO DE VENTAS -->
+      <tr>
+        <td class="fw-bold">Costo de Ventas</td>
+        <td class="text-end">{{ "%.2f"|format(data.costo_ventas) }}</td>
+      </tr>
+
+      <!-- UTILIDAD BRUTA -->
+      <tr class="border-top border-2 border-primary fw-bold" style="background-color: #e7f3ff;">
+        <td style="background-color: #0dadfd;">UTILIDAD BRUTA</td>
+        <td class="text-end" style="background-color: #0dadfd;">{{ "%.2f"|format(data.utilidad_bruta) }}</td>
+      </tr>
+
+      <!-- GASTOS OPERATIVOS -->
+      <tr>
+        <td class="fw-bold">Gastos Operativos</td>
+        <td class="text-end">{{ "%.2f"|format(data.gastos_operativos) }}</td>
+      </tr>
+
+      <!-- UTILIDAD OPERATIVA -->
+      <tr class="border-top border-2 border-primary fw-bold" style="background-color: #e7f3ff;">
+        <td style="background-color: #0dadfd;">UTILIDAD OPERATIVA</td>
+        <td class="text-end" style="background-color: #0dadfd;">{{ "%.2f"|format(data.utilidad_operativa) }}</td>
+      </tr>
+
+      <!-- INGRESOS FINANCIEROS -->
+      <tr>
+        <td class="fw-bold">Ingresos Financieros</td>
+        <td class="text-end">{{ "%.2f"|format(data.ingresos_financieros) }}</td>
+      </tr>
+
+      <!-- GASTOS FINANCIEROS -->
+      <tr>
+        <td class="fw-bold">Gastos Financieros</td>
+        <td class="text-end">-{{ "%.2f"|format(data.gastos_financieros) }}</td>
+      </tr>
+
+      <!-- OTROS INGRESOS -->
+      <tr>
+        <td class="fw-bold">Otros Ingresos</td>
+        <td class="text-end">{{ "%.2f"|format(data.otros_ingresos) }}</td>
+      </tr>
+
+      <!-- OTROS GASTOS -->
+      <tr class="border-bottom">
+        <td class="fw-bold">Otros Gastos</td>
+        <td class="text-end">-{{ "%.2f"|format(data.otros_gastos) }}</td>
+      </tr>
+
+      <!-- UTILIDAD ANTES DE IMPUESTOS -->
+      <tr class="border-top border-2 border-primary fw-bold" style="background-color: #e7f3ff;">
+        <td style="background-color: #0dadfd;">UTILIDAD ANTES DE IMPUESTOS</td>
+        <td class="text-end" style="background-color: #0dadfd;">{{ "%.2f"|format(data.utilidad_antes_impuestos) }}</td>
+      </tr>
+
+      <!-- IMPUESTOS -->
+      <tr>
+        <td class="fw-bold">Impuestos</td>
+        <td class="text-end">-{{ "%.2f"|format(data.impuestos) }}</td>
+      </tr>
+
+      <!-- UTILIDAD NETA -->
+      <tr class="border-top border-3 border-primary fw-bold" style="background-color: #0d6efd; color: white; font-size: 1.1em;">
+        <td style="background-color: #0d6efd;">UTILIDAD NETA</td>
+        <td class="text-end" style="background-color: #0d6efd;">
+          {{ "%.2f"|format(data.utilidad_neta) }}
+        </td>
+      </tr>
+    </table>
   </div>
 </div>
 {% endblock %}
