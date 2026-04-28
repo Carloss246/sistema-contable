@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 import os
+import logging
 
 from dotenv import load_dotenv
 
@@ -29,7 +30,13 @@ def load_settings() -> Settings:
         )
 
     if not app_session_secret:
-        raise RuntimeError("Falta APP_SESSION_SECRET en el entorno (.env).")
+        import secrets
+        generated = secrets.token_hex(32)
+        logging.getLogger(__name__).warning(
+            "APP_SESSION_SECRET no encontrada en el entorno; se generó una secret temporal. "
+            "Define APP_SESSION_SECRET en Vercel/entorno para producción."
+        )
+        app_session_secret = generated
 
     return Settings(
         supabase_url=supabase_url,
